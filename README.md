@@ -42,7 +42,7 @@ L'attaque PMKID est une attaque par dictionnaire qui calcule systématiquement u
 
 Utilisant votre script précédent, le modifier pour réaliser les taches suivantes :
 
-- Lire une passphrase à partir d’un fichier (wordlist) &rarr; __La passphrase utilisée dans la capture es ```admin123```__
+- Lire une passphrase à partir d’un fichier (wordlist) &rarr; __La passphrase utilisée dans la capture est ```admin123```__
 - Dériver la PMK à partir de la passphrase que vous venez de lire et des autres éléments nécessaires contenus dans la capture (cf [exercice 1](#1-obtention-de-la-pmkid-et-des-paramètres-pour-la-dérivation-de-la-pmk))
 - Calculer la PMKID (cf vidéo YouTube)
 - Comparer la PMKID calculée avec celle récupérée de la capture :
@@ -54,6 +54,21 @@ Utilisant votre script précédent, le modifier pour réaliser les taches suivan
 
 A manière de comparaison, réaliser l'attaque sur le [fichier de capture](files/PMKID_handshake.pcap) utilisant la méthode décrite [ici](https://hashcat.net/forum/thread-7717.html).
 
+En suivant le tutoriel, il faut donc premièrement exécuter la ligne suivante:
+
+```hcxpcaptool -z test.16800 test.pcapng```
+
+<img src="images/e3_p1.png"  style="zoom:40%;" />
+
+On constate, dans le rectangle rouge, que nous avons trouvé 2 PMKID.
+
+Il reste ensuite à trouver la passphrase avec la commande suivante, on modifie juste le guess mask : 
+
+```hashcat -m 16800 test.16800 -a 3 -w 3 '?l?l?l?l?l?d?d?d'```
+
+<img src="images/e3_p2.png"  style="zoom:40%;" />
+
+On trouve très rapidement *admin123* bien que le materiel ne soit pas dédié. Cela vient du fait que le guess mask est correct et que par bruteforce, admin123 est très facilement trouvable. 
 
 ## Livrables
 
