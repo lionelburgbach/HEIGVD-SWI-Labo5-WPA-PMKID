@@ -2,11 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Derive WPA keys from Passphrase and 4-way handshake info
-
-Calcule un MIC d'authentification (le MIC pour la transmission de données
-utilise l'algorithme Michael. Dans ce cas-ci, l'authentification, on utilise
-sha-1 pour WPA2 ou MD5 pour WPA)
+Brute force de la passphrase à partir d'un pmkid obtenu dans le premier échange du 4 way handshake.
 """
 
 __author__      = "Abraham Rubinstein et Yann Lederrey"
@@ -57,7 +53,8 @@ def catch4WayHandshake(ap_mac, sta_mac, packets):
     - 1 = HMAC-MD5-MIC
     - 2 = HMAC-SHA1-MIC (le MIC sera tronqué sur 32 bits)
     '''
-
+    
+    #Nous n'avons ici besoin que du premier échange
     EAPOL_ANONCE = 138  # EAPOL-Key1(ANonce)
 
     for packet in packets:
@@ -69,13 +66,13 @@ def catch4WayHandshake(ap_mac, sta_mac, packets):
             # EAPOL-Key1(ANonce) / AP -> STA
             if (wpa_key.key_info == EAPOL_ANONCE) \
             and (dst_mac == sta_mac):
-                #retourne la pmkid
+                #retourne le pmkid
                 return (b2a_hex(wpa_key.wpa_key).decode('UTF-8'))[12:]
     
     return None
 
 '''
-Calculate PMKID
+Calcule le PMKID
 '''
 def tryPmkid(passphrase, ssid, ap_mac, sta_mac):
     passphrase = str.encode(passphrase)
@@ -85,7 +82,7 @@ def tryPmkid(passphrase, ssid, ap_mac, sta_mac):
     return pmkid
 
 '''
-Try to found a WPA passphrase from a PMKID with a word list
+Trouve une pasephrase WPA avec un PMKID donné et un dictionnaire
 '''
 def bruteForcePassphrase(ssid, APmac, Clientmac, pmkid, pathList):
 
@@ -98,6 +95,7 @@ def bruteForcePassphrase(ssid, APmac, Clientmac, pmkid, pathList):
 
 # Read capture file -- it contains beacon, authentication, association, handshake and data
 wpa=rdpcap("PMKID_handshake.pcap")
+
 ssid, APmac, Clientmac = catchAssociationRequest(wpa)
 pmkid = catch4WayHandshake(APmac, Clientmac, wpa)
 passphrase = bruteForcePassphrase(ssid, APmac, Clientmac, pmkid, 'liste_francais.txt')
