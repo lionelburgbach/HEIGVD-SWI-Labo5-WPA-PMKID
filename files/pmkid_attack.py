@@ -82,7 +82,7 @@ def tryPmkid(passphrase, ssid, ap_mac, sta_mac):
     return pmkid
 
 '''
-Trouve une pasephrase WPA avec un PMKID donné et un dictionnaire
+Trouve une passphrase WPA avec un PMKID donné et un dictionnaire
 '''
 def bruteForcePassphrase(ssid, APmac, Clientmac, pmkid, pathList):
 
