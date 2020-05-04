@@ -50,6 +50,12 @@ Utilisant votre script précédent, le modifier pour réaliser les taches suivan
    - Différents &rarr; Essayer avec une nouvelle passphrase
 
 
+
+Le résutat du script **pmkid_attack.py** est le suivant : 
+
+<img src="images/e2_p1.png"  style="zoom:50%;" />
+
+
 ### 3. Attaque hashcat
 
 A manière de comparaison, réaliser l'attaque sur le [fichier de capture](files/PMKID_handshake.pcap) utilisant la méthode décrite [ici](https://hashcat.net/forum/thread-7717.html).

